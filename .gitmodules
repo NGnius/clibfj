@@ -1,0 +1,3 @@
+[submodule "libfj"]
+	path = libfj
+	url = https://github.com/NGnius/libfj

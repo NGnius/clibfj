@@ -1,3 +1,5 @@
+mod robocraft_bindings;
+
 #[cfg(test)]
 mod tests {
     #[test]
