@@ -1,6 +1,8 @@
 #ifndef LIBFJ
 #define LIBFJ
 
+#include <stdint.h>
+
 typedef struct FactoryRobotListInfo_struct{
     uint32_t item_id;
     char* item_name;
@@ -23,6 +25,31 @@ typedef struct FactoryRobotListInfo_struct{
     float cosmetic_rating;
     char* cube_amounts; // JSON as str
 } FactoryRobotListInfo;
+
+typedef struct FactoryRobotGetInfo_struct{
+    uint32_t item_id;
+    char* item_name;
+    char* item_description;
+    char* thumbnail; // url
+    char* added_by;
+    char* added_by_display_name;
+    char* added_date; // ISO date
+    char* expiry_date; // ISO date
+    uint32_t cpu;
+    uint32_t total_robot_ranking;
+    uint32_t rent_count;
+    uint32_t buy_count;
+    uint32_t buyable; // bool
+    char* removed_date;
+    char* ban_date;
+    uint32_t featured; // bool
+    char* banner_message;
+    float combat_rating;
+    float cosmetic_rating;
+    char* cube_data;
+    char* colour_data;
+    char* cube_amounts; // JSON as str
+} FactoryRobotGetInfo;
 
 typedef enum FactoryOrderType_enum {
     Suggested = 0,
@@ -83,8 +110,23 @@ typedef struct FactorySearchQuery_struct{
     uint32_t* default_page; // bool
 } FactorySearchQuery;
 
+typedef struct CubeData_struct {
+    uint32_t id;
+    uint8_t x;
+    uint8_t y;
+    uint8_t z;
+    uint8_t orientation;
+    uint8_t colour;
+} CubeData;
+
 void libfj_factory_front_page(uint32_t size, FactoryRobotListInfo* array_ptr);
 
 void libfj_factory_search(uint32_t size, FactoryRobotListInfo* array_ptr, FactorySearchQuery* search);
+
+void libfj_factory_robot(uint32_t item_id, FactoryRobotGetInfo* result_out);
+
+void libfj_factory_robot_cubes(uint32_t size, CubeData* array_ptr, FactoryRobotGetInfo* info);
+
+void libfj_factory_robot_cubes_raw(uint32_t size, CubeData* array_ptr, char* cube_data, char* colour_data);
 
 #endif

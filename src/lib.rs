@@ -3,6 +3,7 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 
 mod robocraft_bindings;
+mod robocraft_bot_bindings;
 
 pub(crate) unsafe fn allocate_cstring(input: &str) -> *mut c_char {
     let input_c = CString::new(input).expect("Rust &str -> CString conversion failed");
@@ -13,8 +14,8 @@ pub(crate) unsafe fn allocate_cstring(input: &str) -> *mut c_char {
 
 #[cfg(test)]
 mod tests {
-    #[test]
+    /*#[test]
     fn it_works() {
         assert_eq!(2 + 2, 4);
-    }
+    }*/
 }
