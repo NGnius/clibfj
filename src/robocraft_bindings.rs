@@ -1,8 +1,13 @@
 use libc;
-use std::ffi::CString;
+use std::ffi::CStr;
 use std::os::raw::c_char;
+use std::convert::TryFrom;
 use libfj::robocraft_simple as robocraft;
-use libfj::robocraft::FactoryRobotListInfo;
+use libfj::robocraft::{FactoryRobotListInfo, FactoryOrderType, FactoryTextSearchType};
+
+use crate::allocate_cstring;
+
+// C-style structs (for interop)
 
 #[repr(C)]
 pub struct FactoryRobotListInfoC {
@@ -95,8 +100,55 @@ impl From<FactoryRobotListInfo> for FactoryRobotListInfoC {
     }
 }
 
+#[repr(C)]
+pub struct FactorySearchQuery {
+    page: *const i32,
+    items_per_page: *const i32,
+    order: *const i32, // FactoryOrderType
+    movement_filter: *const c_char, // CSV (no spaces) of movement integer values
+    weapon_filter: *const c_char, // CSV (no spaces) of weapon integer values
+    minimum_cpu: *const i32,
+    maximum_cpu: *const i32,
+    text_filter: *const c_char,
+    text_search_field: *const i32, // FactoryTextSearchType
+    buyable: *const u32, // bool
+    prepend_featured_robot: *const u32, // bool
+    featured_only: *const u32, // bool
+    default_page: *const u32, // bool
+}
+
+impl FactorySearchQuery {
+    pub unsafe fn apply(&self, query: robocraft::FactorySearchBuilder) -> robocraft::FactorySearchBuilder {
+        let mut result = query.clone();
+        if !self.page.is_null() {result = result.page((*self.page) as isize);}
+        if !self.items_per_page.is_null() {result = result.items_per_page((*self.items_per_page) as isize);}
+        if !self.order.is_null() {result = result.order(FactoryOrderType::try_from(*self.order as u8).unwrap_or(FactoryOrderType::Suggested));}
+        if !self.movement_filter.is_null() {
+            let filter = CStr::from_ptr(self.movement_filter).to_str().unwrap_or("").to_string();
+            result = result.movement_raw(filter);
+        }
+        if !self.weapon_filter.is_null() {
+            let filter = CStr::from_ptr(self.weapon_filter).to_str().unwrap_or("").to_string();
+            result = result.weapon_raw(filter);
+        }
+        if !self.minimum_cpu.is_null() {result = result.min_cpu(*self.minimum_cpu as isize);}
+        if !self.maximum_cpu.is_null() {result = result.max_cpu(*self.maximum_cpu as isize);}
+        if !self.text_filter.is_null() {
+            let filter = CStr::from_ptr(self.text_filter).to_str().unwrap_or("").to_string();
+            result = result.text(filter);
+        }
+        if !self.text_search_field.is_null() {result = result.text_search_type(FactoryTextSearchType::try_from(*self.text_search_field as u8).unwrap_or(FactoryTextSearchType::All));}
+        if !self.buyable.is_null() {result = result.buyable(*self.buyable != 0);}
+        if !self.prepend_featured_robot.is_null() {result = result.prepend_featured(*self.buyable != 0);}
+        if !self.default_page.is_null() {result = result.default_page(*self.default_page != 0);}
+        result
+    }
+}
+
+// function bindings
+
 #[no_mangle]
-pub unsafe extern "C" fn get_factory_front_page(items: libc::c_uint, array_ptr: *mut FactoryRobotListInfoC) {
+pub unsafe extern "C" fn libfj_factory_front_page(items: libc::c_uint, array_ptr: *mut FactoryRobotListInfoC) {
     if items == 0 {return;} // nothing to populate, so it's useless to do work
     let factory_api = robocraft::FactoryAPI::new();
     let result = factory_api.list();
@@ -118,9 +170,30 @@ pub unsafe extern "C" fn get_factory_front_page(items: libc::c_uint, array_ptr: 
     }
 }
 
-unsafe fn allocate_cstring(input: &str) -> *mut c_char {
-    let input_c = CString::new(input).expect("Rust &str -> CString conversion failed");
-    let space = libc::malloc(libc::strlen(input_c.as_ptr()) + 1) as *mut c_char;
-    libc::strcpy(space, input_c.as_ptr());
-    return space;
+#[no_mangle]
+pub unsafe extern "C" fn libfj_factory_search(items: libc::c_uint, array_ptr: *mut FactoryRobotListInfoC, query: *const FactorySearchQuery) {
+    if items == 0 {return;} // nothing to populate, so it's useless to do work
+    let factory_api = robocraft::FactoryAPI::new();
+    let mut builder = factory_api.list_builder();
+    if !query.is_null() {
+        let query = &*query; // rustic
+        builder = query.apply(builder);
+    }
+    let result = builder.send();
+    if let Ok(info) = result {
+        let max = if info.response.roboshop_items.len() < (items as usize) { info.response.roboshop_items.len() } else {items as usize};
+        let c_result = std::slice::from_raw_parts_mut(array_ptr, items as usize);
+        // copy results to output array
+        for i in 0..max {
+            c_result[i] = info.response.roboshop_items[i].clone().into();
+        }
+    } else if let Err(e) = result {
+        println!("{}", e);
+        // place error info into first array item
+        let c_result = std::slice::from_raw_parts_mut(array_ptr, items as usize);
+        c_result[0] = FactoryRobotListInfoC::mock_error(
+            &format!("{}", &e),
+            ""
+        );
+    }
 }
