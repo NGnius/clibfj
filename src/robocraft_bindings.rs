@@ -148,8 +148,8 @@ impl FactorySearchQuery {
 // function bindings
 
 #[no_mangle]
-pub unsafe extern "C" fn libfj_factory_front_page(items: libc::c_uint, array_ptr: *mut FactoryRobotListInfoC) {
-    if items == 0 {return;} // nothing to populate, so it's useless to do work
+pub unsafe extern "C" fn libfj_factory_front_page(items: libc::c_uint, array_ptr: *mut FactoryRobotListInfoC) -> u32 {
+    if items == 0 {return 0;} // nothing to populate, so it's useless to do work
     let factory_api = robocraft::FactoryAPI::new();
     let result = factory_api.list();
     if let Ok(info) = result {
@@ -159,6 +159,7 @@ pub unsafe extern "C" fn libfj_factory_front_page(items: libc::c_uint, array_ptr
         for i in 0..max {
             c_result[i] = info.response.roboshop_items[i].clone().into();
         }
+        return max as u32;
     } else if let Err(e) = result {
         println!("{}", e);
         // place error info into first array item
@@ -168,11 +169,12 @@ pub unsafe extern "C" fn libfj_factory_front_page(items: libc::c_uint, array_ptr
             ""
         );
     }
+    return 0;
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libfj_factory_search(items: libc::c_uint, array_ptr: *mut FactoryRobotListInfoC, query: *const FactorySearchQuery) {
-    if items == 0 {return;} // nothing to populate, so it's useless to do work
+pub unsafe extern "C" fn libfj_factory_search(items: libc::c_uint, array_ptr: *mut FactoryRobotListInfoC, query: *const FactorySearchQuery) -> u32 {
+    if items == 0 {return 0;} // nothing to populate, so it's useless to do work
     let factory_api = robocraft::FactoryAPI::new();
     let mut builder = factory_api.list_builder();
     if !query.is_null() {
@@ -187,6 +189,7 @@ pub unsafe extern "C" fn libfj_factory_search(items: libc::c_uint, array_ptr: *m
         for i in 0..max {
             c_result[i] = info.response.roboshop_items[i].clone().into();
         }
+        return max as u32;
     } else if let Err(e) = result {
         println!("{}", e);
         // place error info into first array item
@@ -196,4 +199,5 @@ pub unsafe extern "C" fn libfj_factory_search(items: libc::c_uint, array_ptr: *m
             ""
         );
     }
+    return 0;
 }

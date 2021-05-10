@@ -145,12 +145,12 @@ pub unsafe extern "C" fn libfj_factory_robot(item_id: u32, result_out: *mut Fact
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libfj_factory_robot_cubes(items: libc::c_uint, array_ptr: *mut CubeC, info: *const FactoryRobotGetInfoC) {
+pub unsafe extern "C" fn libfj_factory_robot_cubes(items: libc::c_uint, array_ptr: *mut CubeC, info: *const FactoryRobotGetInfoC) -> u32 {
     libfj_factory_robot_cubes_raw(items, array_ptr, (*info).cube_data, (*info).colour_data)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libfj_factory_robot_cubes_raw(items: libc::c_uint, array_ptr: *mut CubeC, cube_data: *const c_char, colour_data: *const c_char) {
+pub unsafe extern "C" fn libfj_factory_robot_cubes_raw(items: libc::c_uint, array_ptr: *mut CubeC, cube_data: *const c_char, colour_data: *const c_char) -> u32 {
     let cube_str = CStr::from_ptr(cube_data).to_str().unwrap();
     let colour_str = CStr::from_ptr(colour_data).to_str().unwrap();
     let mut cube_buf = Vec::new();
@@ -171,7 +171,9 @@ pub unsafe extern "C" fn libfj_factory_robot_cubes_raw(items: libc::c_uint, arra
                 // TODO report error somehow?
             }
         }
+        return max as u32;
     } else {
         // TODO report error somehow?
+        return 0;
     }
 }

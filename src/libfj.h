@@ -119,14 +119,14 @@ typedef struct CubeData_struct {
     uint8_t colour;
 } CubeData;
 
-void libfj_factory_front_page(uint32_t size, FactoryRobotListInfo* array_ptr);
+uint32_t libfj_factory_front_page(uint32_t size, FactoryRobotListInfo* array_ptr);
 
-void libfj_factory_search(uint32_t size, FactoryRobotListInfo* array_ptr, FactorySearchQuery* search);
+uint32_t libfj_factory_search(uint32_t size, FactoryRobotListInfo* array_ptr, FactorySearchQuery* search);
 
 void libfj_factory_robot(uint32_t item_id, FactoryRobotGetInfo* result_out);
 
-void libfj_factory_robot_cubes(uint32_t size, CubeData* array_ptr, FactoryRobotGetInfo* info);
+uint32_t libfj_factory_robot_cubes(uint32_t size, CubeData* array_ptr, FactoryRobotGetInfo* info);
 
-void libfj_factory_robot_cubes_raw(uint32_t size, CubeData* array_ptr, char* cube_data, char* colour_data);
+uint32_t libfj_factory_robot_cubes_raw(uint32_t size, CubeData* array_ptr, char* cube_data, char* colour_data);
 
 #endif
