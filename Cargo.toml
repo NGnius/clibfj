@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 libc = "0.2.93"
-libfj = { path = "libfj", features = ["simple"] }
+libfj = { path = "libfj", features = ["simple", "robocraft"] }
 base64 = "^0.13"
 
 [lib]
